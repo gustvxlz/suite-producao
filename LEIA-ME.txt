@@ -1,0 +1,164 @@
+Suite de Produção — distribuição para GitHub
+============================================
+
+As instruções atuais estão em README.md.
+Os arquivos foram renomeados para funcionar com os imports do Python.
+Esta distribuição não inclui nomes reais de funcionários nos grupos padrão.
+Cadastre seus grupos em Configurações antes do primeiro uso.
+As regras padrão de móveis continuam disponíveis e podem ser editadas.
+
+Notas anteriores de desenvolvimento
+----------------------------------
+Algumas notas abaixo descrevem versões anteriores da interface.
+
+Suite de Produção — versão otimizada
+====================================
+
+ARQUIVOS
+--------
+Deixe estes arquivos na mesma pasta:
+  - suite_producao.py        <- execute este
+  - tema.py
+  - configuracao.py          <- novo: preferências/regras persistentes
+  - extrator_producao.py
+  - lancador_producao.py
+  - lancador_individual.py
+
+INSTALAÇÃO
+----------
+Python 3.10 ou mais recente recomendado.
+
+Instale apenas:
+  pip install openpyxl rapidfuzz
+
+O pandas não é mais necessário. Isso reduz o tempo de abertura e o uso de
+memória, principalmente em PCs de escritório.
+
+Execute:
+  python suite_producao.py
+
+PRINCIPAIS MELHORIAS
+--------------------
+1. Desempenho
+   - O Extrator abre a planilha uma única vez por extração.
+   - Cada aba selecionada é varrida uma única vez para todos os dias.
+   - O Extrator não depende mais de pandas.
+   - Matching de nomes/produtos repetidos usa cache durante o processamento.
+   - O Lançador Individual carrega a estrutura mensal uma única vez, evitando
+     reabrir o workbook ao trocar funcionário/produto.
+   - Operações pesadas rodam fora da thread da interface; a janela continua
+     respondendo enquanto Excel é lido ou salvo.
+
+2. Configurações persistentes
+   A aba "Configurações" permite editar sem abrir o código:
+   - grupos de funcionários e o nome de cada grupo;
+   - funcionários que pertencem a cada grupo;
+   - exclusões permanentes de produtos (nome exato ou "contém");
+   - regras automáticas de renomeação, exclusão ou revisão manual;
+   - ordem das regras;
+   - limites de matching/conferência;
+   - comportamento padrão de soma e confirmações.
+
+   A configuração é salva automaticamente no perfil do usuário:
+   Windows: %APPDATA%\SuiteProducao\config.json
+
+   Atualizar os arquivos .py não apaga suas personalizações.
+
+3. Exclusão permanente rápida
+   Nos lançadores, clique com o botão direito em uma linha e escolha
+   "Excluir sempre este produto". O nome exato fica salvo e passa a ser
+   ignorado automaticamente nas próximas execuções. Você pode remover ou
+   editar a exclusão depois na aba Configurações.
+
+4. Qualidade de vida
+   - lembra os últimos arquivos e a última pasta de saída;
+   - busca de profissionais no Extrator;
+   - grupos escolhidos por seletor, sem estourar a tela quando houver muitos;
+   - tabelas com rolagem horizontal e vertical;
+   - edição por duplo clique / menu de contexto;
+   - backup e importação das configurações em JSON;
+   - planilhas .xlsm são preservadas com VBA ao salvar cópias;
+   - mensagens de erro mais específicas.
+
+SEGURANÇA DOS ARQUIVOS
+----------------------
+Os lançadores não sobrescrevem a planilha original. A saída continua usando o
+sufixo "_ATUALIZADO". Se o arquivo de saída já existir, o programa pergunta
+antes de substituir.
+
+FORMATO EXCEL
+-------------
+Use .xlsx ou .xlsm. O formato antigo .xls não é suportado; abra-o no Excel e
+salve como .xlsx antes de usar a Suite.
+
+PROGRAMAS SEPARADOS
+-------------------
+Também continuam funcionando individualmente:
+  python extrator_producao.py
+  python lancador_producao.py
+  python lancador_individual.py
+
+
+INTERFACE — CORES DAS AÇÕES PRINCIPAIS
+=======================================
+A barra de ação fica sempre no rodapé de cada ferramenta:
+- LARANJA = executar / analisar / gerar relatório
+- VERDE   = lançar e gravar nas planilhas
+- ROXO    = copiar ou exportar o resultado
+
+Nos lançadores o fluxo está numerado:
+1. ANALISAR E CONFERIR
+2. LANÇAR NA(S) PLANILHA(S)
+
+Mesmo desabilitados, os botões mantêm uma versão escura da própria cor
+para continuarem fáceis de localizar.
+
+UI — revisão compacta
+---------------------
+- Ações principais ficam no topo de cada ferramenta, em uma faixa discreta.
+- Azul = gerar/analisar; verde = lançar/gravar; ações auxiliares usam o tema neutro.
+- O rodapé grande de ações foi removido.
+- O conteúdo das três ferramentas principais agora tem rolagem vertical com a roda do mouse.
+- Quando o cursor está sobre uma caixa de texto, lista ou tabela, a roda continua rolando esse componente normalmente.
+
+ATRIBUIÇÃO DE PRODUTOS PELA PLANILHA
+------------------------------------
+Em Configurações > Regras automáticas:
+1. Clique em "Escolher planilha(s)…" e selecione a planilha que contém os produtos.
+   Você pode selecionar CADEIRAS e MESAS juntas.
+2. O programa lê os produtos e salva o catálogo nas configurações. O caminho das
+   planilhas e a lista de produtos ficam persistentes entre execuções.
+3. Clique em "+ Atribuir produto".
+4. Digite como o nome costuma chegar na mensagem (ex.: "Mesa Moscou").
+5. Em "Vai virar", clique em "Selecionar da planilha…", pesquise e escolha o
+   produto real da planilha (ex.: "MESA HAPPY HOUR").
+6. Salve. A nova atribuição fica no topo e tem prioridade sobre regras genéricas.
+
+Use "contém" quando o texto pode chegar com detalhes extras e "exato" quando a
+regra deve valer somente para aquele nome completo. Se a planilha mudar, clique
+em "Atualizar" para reconstruir o catálogo salvo.
+
+ATUALIZAÇÃO — MATCHING ROBUSTO E SELETOR PESQUISÁVEL
+---------------------------------------------------
+- O Lançador Individual agora aplica as mesmas regras automáticas de produto do Cadeiras/Mesas.
+- Nomes com '/' são tratados como variantes/aliases (ex.: CORDA/TRICO, MONACO/ROMA).
+- O nome/modelo tem prioridade sobre acabamento/material; TRICO/CORDA não podem puxar outro modelo.
+- Empates fortes ficam pendentes em vez de serem lançados no chute.
+- Duplo clique em Funcionário ou Produto no Individual abre uma janela separada pesquisável.
+- O seletor do Cadeiras/Mesas também ganhou busca aproximada (tolera pequenas diferenças/erros de digitação).
+- A antiga regra padrão Ninho Corda/Trico deixa de obrigar lançamento manual e usa o catálogo automaticamente.
+
+V3 — MATCHING VALIDADO COM PLANILHAS REAIS (AGOSTO/2026)
+--------------------------------------------------------
+- Reconhecimento prioriza família/tipo e modelo antes de acabamento/material.
+- Nomes com '/' preservam a estrutura: TAUPE/ELEGANTE funciona como alias, mas
+  ASSENTO/HARMONIA não perde a informação de ASSENTO.
+- Abreviações e variações comuns são normalizadas (CONF/CONFORTO, NAVE/NAVEGANTE,
+  ALU/ALUMINIO, NAUTICA/NAUTICO, BERLIN/BERLIM etc.).
+- GOTA TRAMADO no Individual procura primeiro o catálogo real do funcionário;
+  regras de Cadeiras/Mesas só são usadas como fallback quando necessário.
+- Empates perigosos ficam pendentes em vez de serem lançados no chute.
+- No Individual, duplo clique em Produto abre uma janela separada pesquisável,
+  com todos os produtos daquela aba. O clique direito também oferece
+  "Alterar produto…" e "Alterar funcionário…".
+- A pesquisa manual usa o mesmo matcher inteligente do reconhecimento automático.
